@@ -1,0 +1,2770 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>手機越獄模擬訓練系統</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif;
+        }
+        
+        :root {
+            --ios-blue: #007AFF;
+            --ios-dark: #1D1D1F;
+            --android-green: #3DDC84;
+            --android-dark: #202124;
+            --danger-red: #FF3B30;
+            --warning-yellow: #FFCC00;
+            --success-green: #34C759;
+            --dark-bg: #000000;
+            --card-bg: #1C1C1E;
+            --card-border: #2C2C2E;
+            --text-primary: #F2F2F7;
+            --text-secondary: #8E8E93;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+            --glow-blue: 0 0 20px rgba(0, 122, 255, 0.3);
+            --glow-green: 0 0 20px rgba(61, 220, 132, 0.3);
+        }
+        
+        body {
+            background-color: var(--dark-bg);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(0, 122, 255, 0.05) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(61, 220, 132, 0.05) 0%, transparent 20%);
+        }
+        
+        /* 導航按鈕樣式 */
+        .nav-buttons {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .nav-btn {
+            background: var(--card-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--card-border);
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .nav-btn:hover {
+            background: var(--ios-blue);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg), var(--glow-blue);
+        }
+        
+        /* 頁面容器 */
+        .page {
+            display: none;
+            min-height: 100vh;
+            padding: 80px 20px 40px;
+            max-width: 1400px;
+            margin: 0 auto;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        
+        .page.active {
+            display: block;
+            opacity: 1;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* 首頁樣式 */
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+            padding-top: 20px;
+        }
+        
+        .header-icon {
+            font-size: 4rem;
+            color: var(--ios-blue);
+            margin-bottom: 20px;
+            animation: float 3s ease-in-out infinite, glow 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        @keyframes glow {
+            from { text-shadow: 0 0 10px rgba(0, 122, 255, 0.5); }
+            to { text-shadow: 0 0 20px rgba(0, 122, 255, 0.8), 0 0 30px rgba(0, 122, 255, 0.6); }
+        }
+        
+        .header-title {
+            font-size: 3rem;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            background: linear-gradient(90deg, var(--ios-blue), var(--android-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .header-subtitle {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            max-width: 800px;
+            margin: 0 auto 30px;
+            line-height: 1.6;
+        }
+        
+        .intro-section {
+            background: rgba(28, 28, 30, 0.7);
+            border-radius: 16px;
+            padding: 30px;
+            margin: 30px auto 50px;
+            max-width: 900px;
+            border: 1px solid var(--card-border);
+            box-shadow: var(--shadow-lg);
+            backdrop-filter: blur(10px);
+        }
+        
+        .intro-title {
+            font-size: 1.8rem;
+            color: var(--ios-blue);
+            margin-bottom: 20px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .intro-text {
+            line-height: 1.8;
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+            text-align: justify;
+        }
+        
+        .guide-btn {
+            display: block;
+            width: 250px;
+            margin: 30px auto;
+            background: linear-gradient(135deg, var(--ios-blue), #0056CC);
+            color: white;
+            border: none;
+            padding: 16px 30px;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            box-shadow: 0 6px 12px rgba(0, 122, 255, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .guide-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 122, 255, 0.4), var(--glow-blue);
+        }
+        
+        .device-selection {
+            background: rgba(28, 28, 30, 0.7);
+            border-radius: 16px;
+            padding: 30px;
+            margin: 30px auto;
+            max-width: 600px;
+            border: 1px solid var(--card-border);
+            backdrop-filter: blur(10px);
+        }
+        
+        .device-option {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .device-btn {
+            background: var(--card-bg);
+            border: 2px solid transparent;
+            border-radius: 12px;
+            padding: 30px;
+            width: 200px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .device-btn:hover {
+            transform: translateY(-5px);
+            border-color: var(--ios-blue);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .device-btn.android:hover {
+            border-color: var(--android-green);
+            box-shadow: var(--shadow-lg), var(--glow-green);
+        }
+        
+        .device-icon {
+            font-size: 3rem;
+        }
+        
+        .device-btn .device-icon {
+            color: var(--ios-blue);
+        }
+        
+        .device-btn.android .device-icon {
+            color: var(--android-green);
+        }
+        
+        .device-name {
+            font-size: 1.4rem;
+            font-weight: 600;
+        }
+        
+        .enter-btn {
+            display: block;
+            margin: 40px auto 0;
+            background: linear-gradient(135deg, var(--android-green), #2AB170);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .enter-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg), var(--glow-green);
+        }
+        
+        /* 設備選擇頁面 */
+        .device-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+            margin: 40px auto;
+            max-width: 1200px;
+        }
+        
+        .brand-section {
+            background: rgba(28, 28, 30, 0.8);
+            border-radius: 12px;
+            padding: 25px;
+            border: 1px solid var(--card-border);
+        }
+        
+        .brand-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--card-border);
+        }
+        
+        .brand-icon {
+            font-size: 2rem;
+            color: var(--ios-blue);
+        }
+        
+        .android .brand-icon {
+            color: var(--android-green);
+        }
+        
+        .brand-title {
+            font-size: 1.6rem;
+            color: var(--text-primary);
+        }
+        
+        .model-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+        }
+        
+        .model-btn {
+            background: rgba(44, 44, 46, 0.8);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 12px 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: left;
+        }
+        
+        .model-btn:hover {
+            background: rgba(0, 122, 255, 0.2);
+            border-color: var(--ios-blue);
+            transform: translateX(5px);
+        }
+        
+        .android .model-btn:hover {
+            background: rgba(61, 220, 132, 0.2);
+            border-color: var(--android-green);
+        }
+        
+        .model-name {
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+        
+        .model-versions {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+        
+        /* 功能模式選擇頁面 */
+        .mode-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+            margin: 40px auto;
+            max-width: 1200px;
+        }
+        
+        .mode-card {
+            background: rgba(28, 28, 30, 0.8);
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            border: 1px solid var(--card-border);
+            transition: all 0.3s;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .mode-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--ios-blue);
+            box-shadow: var(--shadow-lg), var(--glow-blue);
+        }
+        
+        .mode-icon {
+            font-size: 3rem;
+            color: var(--ios-blue);
+        }
+        
+        .mode-title {
+            font-size: 1.5rem;
+            color: var(--text-primary);
+        }
+        
+        .mode-desc {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            flex-grow: 1;
+        }
+        
+        /* iOS越獄操作頁面 */
+        .jailbreak-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        .jailbreak-header {
+            background: rgba(28, 28, 30, 0.8);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 1px solid var(--card-border);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .device-info {
+            flex-grow: 1;
+        }
+        
+        .device-name-large {
+            font-size: 1.8rem;
+            color: var(--text-primary);
+            margin-bottom: 5px;
+        }
+        
+        .device-details {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        .status-badge {
+            background: rgba(0, 122, 255, 0.2);
+            color: var(--ios-blue);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border: 1px solid var(--ios-blue);
+        }
+        
+        .jailbreak-steps {
+            background: rgba(28, 28, 30, 0.8);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 1px solid var(--card-border);
+        }
+        
+        .step-item {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 20px;
+            border-bottom: 1px solid var(--card-border);
+            transition: all 0.3s;
+        }
+        
+        .step-item:hover {
+            background: rgba(0, 122, 255, 0.1);
+            border-radius: 8px;
+        }
+        
+        .step-item:last-child {
+            border-bottom: none;
+        }
+        
+        .step-number {
+            width: 40px;
+            height: 40px;
+            background: var(--card-bg);
+            border: 2px solid var(--card-border);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .step-item.active .step-number {
+            background: var(--ios-blue);
+            border-color: var(--ios-blue);
+            box-shadow: var(--glow-blue);
+        }
+        
+        .step-content {
+            flex-grow: 1;
+        }
+        
+        .step-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .step-desc {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        .step-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .action-btn {
+            background: var(--card-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--card-border);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+        
+        .action-btn:hover {
+            background: var(--ios-blue);
+            border-color: var(--ios-blue);
+        }
+        
+        /* 模擬終端界面 */
+        .terminal-container {
+            background: #000;
+            border-radius: 8px;
+            padding: 20px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            margin: 30px 0;
+            border: 1px solid #333;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .terminal-line {
+            margin-bottom: 5px;
+            white-space: pre-wrap;
+        }
+        
+        .terminal-prompt {
+            color: #3DDC84;
+        }
+        
+        .terminal-command {
+            color: #F2F2F7;
+        }
+        
+        .terminal-output {
+            color: #8E8E93;
+        }
+        
+        .terminal-success {
+            color: #34C759;
+        }
+        
+        .terminal-error {
+            color: #FF3B30;
+        }
+        
+        /* 進度條 */
+        .progress-container {
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 30px 0;
+            border: 1px solid var(--card-border);
+        }
+        
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+        
+        .progress-bar {
+            height: 20px;
+            background: rgba(44, 44, 46, 0.8);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--ios-blue), var(--android-green));
+            width: 0%;
+            transition: width 1s ease-in-out;
+            position: relative;
+        }
+        
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            animation: progressShine 2s infinite;
+        }
+        
+        @keyframes progressShine {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        /* 工具庫樣式 */
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+            margin: 40px auto;
+            max-width: 1200px;
+        }
+        
+        .tool-card {
+            background: rgba(28, 28, 30, 0.8);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--card-border);
+            transition: all 0.3s;
+        }
+        
+        .tool-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--ios-blue);
+            box-shadow: var(--shadow-lg), var(--glow-blue);
+        }
+        
+        .tool-header {
+            background: var(--card-bg);
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid var(--card-border);
+        }
+        
+        .tool-icon {
+            font-size: 2.5rem;
+            color: var(--ios-blue);
+            margin-bottom: 15px;
+        }
+        
+        .tool-name {
+            font-size: 1.4rem;
+            color: var(--text-primary);
+        }
+        
+        .tool-body {
+            padding: 20px;
+        }
+        
+        .tool-desc {
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+        
+        .tool-info {
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+        }
+        
+        .tool-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        /* 故障排查樣式 */
+        .issue-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 25px;
+            margin: 40px auto;
+            max-width: 1200px;
+        }
+        
+        .issue-card {
+            background: rgba(28, 28, 30, 0.8);
+            border-radius: 12px;
+            padding: 25px;
+            border: 1px solid var(--card-border);
+            transition: all 0.3s;
+        }
+        
+        .issue-card:hover {
+            border-color: var(--danger-red);
+            transform: translateY(-3px);
+        }
+        
+        .issue-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .issue-icon {
+            font-size: 2rem;
+            color: var(--danger-red);
+        }
+        
+        .issue-title {
+            font-size: 1.4rem;
+            color: var(--text-primary);
+        }
+        
+        .issue-desc {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        
+        /* 響應式調整 */
+        @media (max-width: 768px) {
+            .header-title {
+                font-size: 2.2rem;
+            }
+            
+            .device-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .mode-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .tools-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .issue-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .nav-buttons {
+                position: static;
+                justify-content: center;
+                margin-bottom: 20px;
+                flex-wrap: wrap;
+            }
+            
+            .page {
+                padding: 20px 15px 40px;
+            }
+            
+            .header {
+                margin-bottom: 30px;
+            }
+            
+            .device-option {
+                flex-direction: column;
+            }
+            
+            .device-btn {
+                width: 100%;
+            }
+        }
+        
+        /* 提示框 */
+        .hint-box {
+            background: rgba(0, 122, 255, 0.1);
+            border-left: 4px solid var(--ios-blue);
+            padding: 15px;
+            border-radius: 0 8px 8px 0;
+            margin: 20px 0;
+        }
+        
+        .hint-box.warning {
+            background: rgba(255, 204, 0, 0.1);
+            border-left-color: var(--warning-yellow);
+        }
+        
+        .hint-box.danger {
+            background: rgba(255, 59, 48, 0.1);
+            border-left-color: var(--danger-red);
+        }
+        
+        .hint-box.success {
+            background: rgba(52, 199, 89, 0.1);
+            border-left-color: var(--success-green);
+        }
+        
+        /* 模擬設備重啟畫面 */
+        .reboot-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s;
+        }
+        
+        .reboot-screen.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+        
+        .reboot-logo {
+            font-size: 4rem;
+            color: #FFF;
+            animation: rebootPulse 1.5s infinite;
+        }
+        
+        @keyframes rebootPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        
+        /* 模擬Cydia界面 */
+        .cydia-container {
+            background: rgba(28, 28, 30, 0.9);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 30px 0;
+            border: 1px solid var(--card-border);
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .cydia-header {
+            background: linear-gradient(135deg, #FF9500, #FF5E3A);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .cydia-title {
+            font-size: 2rem;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .plugin-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .plugin-item {
+            background: rgba(44, 44, 46, 0.8);
+            border-radius: 8px;
+            padding: 15px;
+            border: 1px solid var(--card-border);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .plugin-item:hover {
+            border-color: #FF9500;
+            transform: translateY(-2px);
+        }
+        
+        /* 頁腳 */
+        .footer {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--card-border);
+            margin-top: 50px;
+        }
+        
+        /* 加載動畫 */
+        .loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--dark-bg);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid var(--card-border);
+            border-top-color: var(--ios-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- 加載動畫 -->
+    <div class="loader" id="loader">
+        <div class="spinner"></div>
+        <div>加載越獄模擬系統...</div>
+    </div>
+
+    <!-- 模擬設備重啟畫面 -->
+    <div class="reboot-screen" id="rebootScreen">
+        <div class="reboot-logo">
+            <i class="fas fa-mobile-alt"></i>
+        </div>
+    </div>
+
+    <!-- 導航按鈕 -->
+    <div class="nav-buttons">
+        <button class="nav-btn" id="homeBtn"><i class="fas fa-home"></i> 返回主頁</button>
+        <button class="nav-btn" id="backBtn"><i class="fas fa-arrow-left"></i> 返回上一頁</button>
+    </div>
+
+    <!-- 首頁 -->
+    <div id="page1" class="page active">
+        <div class="header">
+            <div class="header-icon">
+                <i class="fas fa-unlock-alt"></i>
+            </div>
+            <h1 class="header-title">手機越獄模擬訓練系統</h1>
+            <p class="header-subtitle">跨平台iOS/Android全版本越獄/升降級模擬，沉浸式學習越獄技術與風險管理</p>
+        </div>
+        
+        <div class="intro-section">
+            <h2 class="intro-title">
+                <i class="fas fa-bullseye"></i>
+                系統核心定位
+            </h2>
+            <p class="intro-text">
+                本系統基於純前端技術堆棧開發，覆蓋iOS、Android全品牌全版本越獄/升降級流程，兼具教學性與沉浸式操作體驗。所有功能模塊獨立封裝，確保跨設備流暢運行，無需後端依賴。
+            </p>
+            <button class="guide-btn" id="guideBtn">
+                <i class="fas fa-book"></i> 操作指南
+            </button>
+        </div>
+        
+        <div class="device-selection">
+            <h2 class="intro-title" style="font-size: 1.5rem;">
+                <i class="fas fa-mobile-alt"></i>
+                選擇設備平台
+            </h2>
+            <p class="intro-text" style="text-align: center; margin-bottom: 20px;">
+                請選擇要進行越獄模擬的設備平台
+            </p>
+            
+            <div class="device-option">
+                <div class="device-btn" id="iosBtn">
+                    <div class="device-icon">
+                        <i class="fab fa-apple"></i>
+                    </div>
+                    <div class="device-name">iOS 設備</div>
+                    <div style="color: var(--text-secondary); font-size: 0.9rem;">
+                        iPhone 4~15系列<br>
+                        iPad 全系列
+                    </div>
+                </div>
+                
+                <div class="device-btn android" id="androidBtn">
+                    <div class="device-icon">
+                        <i class="fab fa-android"></i>
+                    </div>
+                    <div class="device-name">Android 設備</div>
+                    <div style="color: var(--text-secondary); font-size: 0.9rem;">
+                        三星、小米、華為等<br>
+                        全品牌支援
+                    </div>
+                </div>
+            </div>
+            
+            <button class="enter-btn" id="enterSelectionBtn">
+                <i class="fas fa-arrow-right"></i> 進入選擇頁
+            </button>
+        </div>
+        
+        <div class="footer">
+            <p>跨平台手機越獄模擬訓練系統 &copy; 2023</p>
+            <p>基於HTML5 + CSS3 + JavaScript開發，支援離線運行</p>
+        </div>
+    </div>
+
+    <!-- 操作指南頁面 -->
+    <div id="pageGuide" class="page">
+        <div class="header">
+            <h1 class="header-title">操作指南</h1>
+            <p class="header-subtitle">系統使用教學、工具說明、流程規則與風險提示</p>
+        </div>
+        
+        <div class="intro-section">
+            <h2 class="intro-title">
+                <i class="fas fa-exclamation-triangle"></i>
+                重要風險提示
+            </h2>
+            <p class="intro-text">
+                <strong>注意：</strong>本系統為教育訓練用途的模擬器，所有操作均在虛擬環境中進行。在真實設備上進行越獄/刷機操作可能導致：
+            </p>
+            <ul style="color: var(--text-secondary); line-height: 1.8; padding-left: 20px; margin-bottom: 20px;">
+                <li>設備永久損壞（變磚）</li>
+                <li>數據永久丟失</li>
+                <li>失去官方保修資格</li>
+                <li>系統不穩定或功能異常</li>
+                <li>安全風險增加（惡意軟件、數據洩露）</li>
+            </ul>
+            <p class="intro-text">
+                建議僅在備份重要數據且了解風險後，於備用設備上進行真實操作。
+            </p>
+        </div>
+        
+        <div class="intro-section">
+            <h2 class="intro-title">
+                <i class="fas fa-layer-group"></i>
+                系統頁面架構
+            </h2>
+            <p class="intro-text">
+                <strong>分頁遞進邏輯：</strong>
+            </p>
+            <ul style="color: var(--text-secondary); line-height: 1.8; padding-left: 20px; margin-bottom: 20px;">
+                <li><strong>首頁：</strong>系統入口，選擇設備平台</li>
+                <li><strong>設備選擇頁：</strong>選擇具體設備型號與系統版本</li>
+                <li><strong>功能模式頁：</strong>選擇越獄、升降級、工具庫或故障排查模式</li>
+                <li><strong>操作頁面：</strong>具體功能操作界面</li>
+            </ul>
+            <p class="intro-text">
+                所有頁面配備返回主頁/返回上一頁按鈕，確保導航不影響功能代碼結構。
+            </p>
+        </div>
+        
+        <div class="intro-section">
+            <h2 class="intro-title">
+                <i class="fas fa-gamepad"></i>
+                遊戲化交互設計
+            </h2>
+            <p class="intro-text">
+                <strong>難度分級：</strong>
+            </p>
+            <ul style="color: var(--text-secondary); line-height: 1.8; padding-left: 20px; margin-bottom: 20px;">
+                <li><strong>新手模式：</strong>全步驟引導，關鍵步驟高亮提示，自動規避高危操作</li>
+                <li><strong>專家模式：</strong>無引導，需手動匹配工具與固件，失誤直接觸發設備故障</li>
+            </ul>
+            <p class="intro-text">
+                <strong>評分系統：</strong>依據操作時間、步驟精準度、風險規避評分，成功完成給予稱號獎勵。
+            </p>
+        </div>
+    </div>
+
+    <!-- 設備型號選擇頁面 -->
+    <div id="page2" class="page">
+        <div class="header">
+            <h1 class="header-title">選擇設備型號</h1>
+            <p class="header-subtitle">選擇您的設備型號與系統版本</p>
+        </div>
+        
+        <div class="hint-box">
+            <p><i class="fas fa-info-circle"></i> 請選擇您的設備型號，系統將自動列出可用的越獄工具與支援的系統版本。</p>
+        </div>
+        
+        <div class="device-grid" id="deviceGrid">
+            <!-- iOS設備列表 -->
+            <div class="brand-section">
+                <div class="brand-header">
+                    <div class="brand-icon">
+                        <i class="fab fa-apple"></i>
+                    </div>
+                    <h2 class="brand-title">iOS 設備</h2>
+                </div>
+                <div class="model-list" id="iosModels">
+                    <!-- iOS型號將由JavaScript動態生成 -->
+                </div>
+            </div>
+            
+            <!-- Android設備列表 -->
+            <div class="brand-section android">
+                <div class="brand-header">
+                    <div class="brand-icon">
+                        <i class="fab fa-android"></i>
+                    </div>
+                    <h2 class="brand-title">Android 設備</h2>
+                </div>
+                <div class="model-list" id="androidModels">
+                    <!-- Android型號將由JavaScript動態生成 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 功能模式選擇頁面 -->
+    <div id="page3" class="page">
+        <div class="header">
+            <h1 class="header-title">選擇功能模式</h1>
+            <p class="header-subtitle">請選擇要進行的操作類型</p>
+        </div>
+        
+        <div class="mode-grid">
+            <div class="mode-card" data-mode="jailbreak">
+                <div class="mode-icon">
+                    <i class="fas fa-unlock-alt"></i>
+                </div>
+                <h3 class="mode-title">越獄模式</h3>
+                <p class="mode-desc">
+                    iOS/Android越獄模擬，支援Checkra1n、Odyssey、Magisk等工具。
+                    完整流程：備份數據→進入DFU模式→運行越獄工具→安裝Cydia/插件。
+                </p>
+                <div class="status-badge">支援全版本</div>
+            </div>
+            
+            <div class="mode-card" data-mode="upgrade">
+                <div class="mode-icon">
+                    <i class="fas fa-sync-alt"></i>
+                </div>
+                <h3 class="mode-title">升降級模式</h3>
+                <p class="mode-desc">
+                    iOS SHSH簽名驗證、Android刷機包選擇。
+                    模擬固件升降級流程，提示簽名驗證、降級工具需求等真實場景。
+                </p>
+                <div class="status-badge">需簽名驗證</div>
+            </div>
+            
+            <div class="mode-card" data-mode="tools">
+                <div class="mode-icon">
+                    <i class="fas fa-toolbox"></i>
+                </div>
+                <h3 class="mode-title">工具庫模式</h3>
+                <p class="mode-desc">
+                    收錄20+款越獄/刷機工具，每款工具配備3D介面模擬、參數說明、使用教程、錯誤示範。
+                    支援工具組合使用教學。
+                </p>
+                <div class="status-badge">20+工具</div>
+            </div>
+            
+            <div class="mode-card" data-mode="troubleshoot">
+                <div class="mode-icon">
+                    <i class="fas fa-bug"></i>
+                </div>
+                <h3 class="mode-title">故障排查模式</h3>
+                <p class="mode-desc">
+                    內建故障庫（白蘋果、無限重啟、Root丟失等），支援模擬故障排查。
+                    提供救援工具模擬（iTunes恢復、ODIN刷機）。
+                </p>
+                <div class="status-badge">救援功能</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- iOS越獄操作頁面 -->
+    <div id="pageIOSJailbreak" class="page">
+        <div class="header">
+            <h1 class="header-title">iOS越獄模擬</h1>
+            <p class="header-subtitle">完整越獄流程模擬，從準備到成功越獄</p>
+        </div>
+        
+        <div class="jailbreak-container">
+            <div class="jailbreak-header">
+                <div class="device-info">
+                    <div class="device-name-large" id="currentDevice">iPhone 13 Pro</div>
+                    <div class="device-details" id="deviceDetails">iOS 15.4.1 • A15仿生晶片 • 256GB</div>
+                </div>
+                <div class="status-badge" id="jailbreakStatus">準備越獄</div>
+            </div>
+            
+            <div class="hint-box warning">
+                <p><i class="fas fa-exclamation-triangle"></i> <strong>重要：</strong> 在開始前，請確保已備份重要數據。越獄過程中設備可能重啟多次。</p>
+            </div>
+            
+            <div class="jailbreak-steps">
+                <div class="step-item active" data-step="1">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <div class="step-title">備份數據</div>
+                        <div class="step-desc">通過iCloud或電腦備份重要數據</div>
+                    </div>
+                    <div class="step-actions">
+                        <button class="action-btn" data-action="backup">模擬備份</button>
+                    </div>
+                </div>
+                
+                <div class="step-item" data-step="2">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <div class="step-title">關閉查找我的iPhone</div>
+                        <div class="step-desc">進入設定 → Apple ID → 查找 → 關閉查找我的iPhone</div>
+                    </div>
+                    <div class="step-actions">
+                        <button class="action-btn" data-action="findmy">關閉查找</button>
+                    </div>
+                </div>
+                
+                <div class="step-item" data-step="3">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <div class="step-title">進入DFU模式</div>
+                        <div class="step-desc">
+                            1. 連接設備到電腦<br>
+                            2. 快速按下音量+、音量-<br>
+                            3. 長按電源鍵直到屏幕變黑<br>
+                            4. 立即同時按住電源鍵+音量- 5秒<br>
+                            5. 放開電源鍵，繼續按住音量- 10秒
+                        </div>
+                    </div>
+                    <div class="step-actions">
+                        <button class="action-btn" data-action="dfu">進入DFU</button>
+                    </div>
+                </div>
+                
+                <div class="step-item" data-step="4">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <div class="step-title">運行越獄工具</div>
+                        <div class="step-desc">
+                            根據設備型號選擇越獄工具：<br>
+                            <select id="jailbreakTool" style="margin-top: 10px; padding: 8px; background: var(--card-bg); color: var(--text-primary); border: 1px solid var(--card-border); border-radius: 6px; width: 100%;">
+                                <option value="checkra1n">Checkra1n (iOS 12.0-14.8.1)</option>
+                                <option value="unc0ver">Unc0ver (iOS 11.0-14.8)</option>
+                                <option value="odyssey">Odyssey (iOS 13.0-13.7)</option>
+                                <option value="taurine">Taurine (iOS 14.0-14.3)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="step-actions">
+                        <button class="action-btn" data-action="run">運行工具</button>
+                    </div>
+                </div>
+                
+                <div class="step-item" data-step="5">
+                    <div class="step-number">5</div>
+                    <div class="step-content">
+                        <div class="step-title">等待越獄完成</div>
+                        <div class="step-desc">工具將自動進行漏洞利用、安裝越獄環境</div>
+                    </div>
+                    <div class="step-actions">
+                        <button class="action-btn" data-action="wait" disabled>進行中...</button>
+                    </div>
+                </div>
+                
+                <div class="step-item" data-step="6">
+                    <div class="step-number">6</div>
+                    <div class="step-content">
+                        <div class="step-title">安裝Cydia/Sileo</div>
+                        <div class="step-desc">越獄完成後安裝軟件包管理器</div>
+                    </div>
+                    <div class="step-actions">
+                        <button class="action-btn" data-action="install" disabled>等待...</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="progress-container">
+                <div class="progress-header">
+                    <span>越獄進度</span>
+                    <span id="progressPercent">0%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+            </div>
+            
+            <div class="terminal-container" id="terminalOutput">
+                <div class="terminal-line">
+                    <span class="terminal-prompt">$ </span>
+                    <span class="terminal-command">正在初始化越獄環境...</span>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px;">
+                <button class="enter-btn" id="startJailbreakBtn" style="background: linear-gradient(135deg, #FF9500, #FF5E3A);">
+                    <i class="fas fa-play"></i> 開始越獄
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Android Root操作頁面 -->
+    <div id="pageAndroidRoot" class="page">
+        <div class="header">
+            <h1 class="header-title">Android Root/刷機模擬</h1>
+            <p class="header-subtitle">Android設備Root權限獲取與刷機流程模擬</p>
+        </div>
+        
+        <div class="jailbreak-container">
+            <div class="jailbreak-header">
+                <div class="device-info">
+                    <div class="device-name-large" id="androidDevice">小米12 Pro</div>
+                    <div class="device-details" id="androidDetails">MIUI 14 • Snapdragon 8 Gen 1 • 256GB</div>
+                </div>
+                <div class="status-badge" style="background: rgba(61, 220, 132, 0.2); color: var(--android-green); border-color: var(--android-green);">
+                    準備Root
+                </div>
+            </div>
+            
+            <div class="hint-box warning">
+                <p><i class="fas fa-exclamation-triangle"></i> <strong>注意：</strong> Root操作會解鎖Bootloader，導致設備恢復出廠設置並失去官方保修。</p>
+            </div>
+            
+            <div class="jailbreak-steps">
+                <div class="step-item active" data-step="1">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <div class="step-title">申請Bootloader解鎖</div>
+                        <div class="step-desc">
+                            前往官方解鎖網站申請解鎖權限<br>
+                            <small style="color: var(--text-secondary);">小米設備需要綁定帳號並等待7天</small>
+                        </div>
+                    </div>
+                    <div class="step-actions">
+                        <button class="action-btn" data-action="apply">申請解鎖</button>
+                    </div>
+                </div>
+                
+                <div class="step-item" data-step="2">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <div class="step-title">進入Fastboot模式</div>
+                        <div class="step-desc">
+                            1. 關閉設備電源<br>
+                            2. 同時按住音量- + 電源鍵<br>
+                            3. 進入Fastboot模式（兔子畫面）
+                        </div>
+                    </div>
+                    <div class="step-actions">
+                        <button class="action-btn" data-action="fastboot">進入Fastboot</button>
+                    </div>
+                </div>
+                
+                <div class="step-item" data-step="3">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <div class="step-title">解鎖Bootloader</div>
+                        <div class="step-desc">
+                            通過電腦執行解鎖命令：<br>
+                            <code style="color: var(--android-green);">fastboot oem unlock</code>
+                        </div>
+                    </div>
+                    <div class="step-actions">
+                        <button class="action-btn" data-action="unlock">解鎖BL</button>
+                    </div>
+                </div>
+                
+                <div class="step-item" data-step="4">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <div class="step-title">刷入TWRP Recovery</div>
+                        <div class="step-desc">
+                            刷入第三方Recovery以便安裝Root工具<br>
+                            <code style="color: var(--android-green);">fastboot flash recovery twrp.img</code>
+                        </div>
+                    </div>
+                    <div class="step-actions">
+                        <button class="action-btn" data-action="recovery">刷入TWRP</button>
+                    </div>
+                </div>
+                
+                <div class="step-item" data-step="5">
+                    <div class="step-number">5</div>
+                    <div class="step-content">
+                        <div class="step-title">安裝Magisk</div>
+                        <div class="step-desc">
+                            在TWRP中刷入Magisk ZIP包<br>
+                            獲取Root權限而不修改系統分區
+                        </div>
+                    </div>
+                    <div class="step-actions">
+                        <button class="action-btn" data-action="magisk">安裝Magisk</button>
+                    </div>
+                </div>
+                
+                <div class="step-item" data-step="6">
+                    <div class="step-number">6</div>
+                    <div class="step-content">
+                        <div class="step-title">刷入第三方ROM (可選)</div>
+                        <div class="step-desc">
+                            選擇喜歡的第三方ROM刷入<br>
+                            LineageOS / Pixel Experience / MIUI EU等
+                        </div>
+                    </div>
+                    <div class="step-actions">
+                        <button class="action-btn" data-action="rom">刷機</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="progress-container">
+                <div class="progress-header">
+                    <span>Root進度</span>
+                    <span id="androidProgressPercent">0%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="androidProgressFill" style="background: linear-gradient(90deg, var(--android-green), #2AB170);"></div>
+                </div>
+            </div>
+            
+            <div class="terminal-container" id="androidTerminalOutput">
+                <div class="terminal-line">
+                    <span class="terminal-prompt">fastboot> </span>
+                    <span class="terminal-command">正在檢測設備連接...</span>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px;">
+                <button class="enter-btn" id="startRootBtn">
+                    <i class="fas fa-play"></i> 開始Root流程
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 工具庫頁面 -->
+    <div id="pageTools" class="page">
+        <div class="header">
+            <h1 class="header-title">越獄工具庫</h1>
+            <p class="header-subtitle">收錄20+款越獄/刷機工具，配備詳細教學與模擬操作</p>
+        </div>
+        
+        <div class="tools-grid" id="toolsGrid">
+            <!-- 工具卡片將由JavaScript動態生成 -->
+        </div>
+    </div>
+
+    <!-- 故障排查頁面 -->
+    <div id="pageTroubleshoot" class="page">
+        <div class="header">
+            <h1 class="header-title">故障診斷與救援</h1>
+            <p class="header-subtitle">內建故障庫，模擬越獄/刷機失敗的排查與修復</p>
+        </div>
+        
+        <div class="issue-grid" id="issueGrid">
+            <!-- 故障卡片將由JavaScript動態生成 -->
+        </div>
+        
+        <div class="cydia-container" style="display: none;" id="cydiaContainer">
+            <div class="cydia-header">
+                <h2 class="cydia-title">Cydia</h2>
+                <p>The Ultimate Jailbreak App Store</p>
+            </div>
+            
+            <div class="plugin-list" id="pluginList">
+                <!-- 插件列表將由JavaScript動態生成 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 系統狀態管理
+        const SystemState = {
+            currentPage: 'page1',
+            pageHistory: ['page1'],
+            selectedPlatform: null, // 'ios' or 'android'
+            selectedDevice: null,
+            selectedMode: null,
+            jailbreakProgress: 0,
+            rootProgress: 0,
+            currentStep: 1,
+            isJailbreaking: false,
+            isRooting: false,
+            difficulty: 'beginner' // 'beginner' or 'expert'
+        };
+
+        // 設備數據庫
+        const DeviceDatabase = {
+            ios: [
+                { id: 'iphone4', name: 'iPhone 4', versions: ['iOS 4.0-7.1.2'], chip: 'A4', tools: ['p0sixspwn', 'evasi0n'] },
+                { id: 'iphone4s', name: 'iPhone 4S', versions: ['iOS 5.0-9.3.6'], chip: 'A5', tools: ['p0sixspwn', 'evasi0n7'] },
+                { id: 'iphone5', name: 'iPhone 5', versions: ['iOS 6.0-10.3.4'], chip: 'A6', tools: ['evasi0n', 'pangu'] },
+                { id: 'iphone5s', name: 'iPhone 5S', versions: ['iOS 7.0-12.5.7'], chip: 'A7', tools: ['pangu', 'taig', 'checkra1n'] },
+                { id: 'iphone6', name: 'iPhone 6', versions: ['iOS 8.0-12.5.7'], chip: 'A8', tools: ['pangu', 'taig', 'checkra1n'] },
+                { id: 'iphone6s', name: 'iPhone 6S', versions: ['iOS 9.0-15.7.9'], chip: 'A9', tools: ['pangu', 'checkra1n', 'unc0ver'] },
+                { id: 'iphone7', name: 'iPhone 7', versions: ['iOS 10.0-15.7.9'], chip: 'A10', tools: ['checkra1n', 'unc0ver'] },
+                { id: 'iphone8', name: 'iPhone 8', versions: ['iOS 11.0-16.6.1'], chip: 'A11', tools: ['checkra1n', 'unc0ver', 'taurine'] },
+                { id: 'iphonex', name: 'iPhone X', versions: ['iOS 11.0-16.6.1'], chip: 'A11', tools: ['checkra1n', 'unc0ver', 'taurine'] },
+                { id: 'iphonexs', name: 'iPhone XS', versions: ['iOS 12.0-16.6.1'], chip: 'A12', tools: ['unc0ver', 'chimera', 'odyssey'] },
+                { id: 'iphone11', name: 'iPhone 11', versions: ['iOS 13.0-17.0'], chip: 'A13', tools: ['unc0ver', 'checkra1n', 'taurine'] },
+                { id: 'iphone12', name: 'iPhone 12', versions: ['iOS 14.0-17.0'], chip: 'A14', tools: ['unc0ver', 'taurine'] },
+                { id: 'iphone13', name: 'iPhone 13', versions: ['iOS 15.0-17.0'], chip: 'A15', tools: ['checkra1n', 'unc0ver'] },
+                { id: 'iphone14', name: 'iPhone 14', versions: ['iOS 16.0-17.0'], chip: 'A16', tools: ['unc0ver', 'palera1n'] },
+                { id: 'iphone15', name: 'iPhone 15', versions: ['iOS 17.0-17.0.3'], chip: 'A17 Pro', tools: ['palera1n'] },
+                { id: 'ipad6', name: 'iPad 6th', versions: ['iOS 11.0-15.7.9'], chip: 'A10', tools: ['checkra1n', 'unc0ver'] },
+                { id: 'ipadpro11', name: 'iPad Pro 11"', versions: ['iOS 12.0-16.6.1'], chip: 'A12X', tools: ['unc0ver', 'chimera', 'odyssey'] },
+                { id: 'ipadair4', name: 'iPad Air 4', versions: ['iOS 14.0-16.6.1'], chip: 'A14', tools: ['unc0ver', 'taurine'] }
+            ],
+            
+            android: [
+                { id: 'samsung_s21', name: 'Samsung Galaxy S21', brand: 'Samsung', ui: 'One UI 3-5', tools: ['Odin', 'Magisk', 'TWRP'] },
+                { id: 'samsung_s22', name: 'Samsung Galaxy S22', brand: 'Samsung', ui: 'One UI 4-5', tools: ['Odin', 'Magisk', 'TWRP'] },
+                { id: 'xiaomi_12', name: 'Xiaomi 12 Pro', brand: 'Xiaomi', ui: 'MIUI 13-14', tools: ['MiUnlock', 'Magisk', 'OrangeFox'] },
+                { id: 'xiaomi_13', name: 'Xiaomi 13 Ultra', brand: 'Xiaomi', ui: 'MIUI 14', tools: ['MiUnlock', 'Magisk', 'TWRP'] },
+                { id: 'huawei_p50', name: 'Huawei P50 Pro', brand: 'Huawei', ui: 'HarmonyOS 2-3', tools: ['HiSuite', 'Magisk'] },
+                { id: 'huawei_mate40', name: 'Huawei Mate 40', brand: 'Huawei', ui: 'HarmonyOS 2-3', tools: ['HiSuite', 'Magisk'] },
+                { id: 'google_pixel6', name: 'Google Pixel 6', brand: 'Google', ui: 'Stock Android 12-14', tools: ['Fastboot', 'Magisk', 'TWRP'] },
+                { id: 'google_pixel7', name: 'Google Pixel 7', brand: 'Google', ui: 'Stock Android 13-14', tools: ['Fastboot', 'Magisk', 'TWRP'] },
+                { id: 'oneplus_9', name: 'OnePlus 9 Pro', brand: 'OnePlus', ui: 'OxygenOS 11-13', tools: ['Fastboot', 'Magisk', 'TWRP'] },
+                { id: 'oneplus_10', name: 'OnePlus 10 Pro', brand: 'OnePlus', ui: 'OxygenOS 12-13', tools: ['Fastboot', 'Magisk', 'TWRP'] },
+                { id: 'oppo_findx5', name: 'OPPO Find X5 Pro', brand: 'OPPO', ui: 'ColorOS 12-13', tools: ['Deep Testing', 'Magisk'] },
+                { id: 'vivo_x80', name: 'vivo X80 Pro', brand: 'vivo', ui: 'OriginOS Ocean', tools: ['vivo Unlock', 'Magisk'] },
+                { id: 'realme_gt2', name: 'realme GT2 Pro', brand: 'realme', ui: 'realme UI 3-4', tools: ['Deep Testing', 'Magisk'] },
+                { id: 'sony_xperia1', name: 'Sony Xperia 1 III', brand: 'Sony', ui: 'Stock Android 11-13', tools: ['Fastboot', 'Magisk', 'TWRP'] }
+            ]
+        };
+
+        // 工具數據庫
+        const ToolsDatabase = [
+            {
+                id: 'checkra1n',
+                name: 'Checkra1n',
+                icon: 'fab fa-apple',
+                description: '基於checkm8硬件漏洞的iOS越獄工具，支援A5-A11設備，iOS 12.0-14.8.1',
+                platform: 'ios',
+                difficulty: '中等',
+                successRate: '95%',
+                risks: ['需要電腦', '僅限A5-A11設備']
+            },
+            {
+                id: 'unc0ver',
+                name: 'unc0ver',
+                icon: 'fas fa-unlock',
+                description: '軟件漏洞越獄工具，支援iOS 11.0-14.8，無需電腦，直接在設備上運行',
+                platform: 'ios',
+                difficulty: '簡單',
+                successRate: '85%',
+                risks: ['需要簽名', '可能被撤銷']
+            },
+            {
+                id: 'odyssey',
+                name: 'Odyssey',
+                icon: 'fas fa-ship',
+                description: '基於libhooker的現代越獄工具，支援iOS 13.0-13.7，穩定性高',
+                platform: 'ios',
+                difficulty: '簡單',
+                successRate: '90%',
+                risks: ['僅支援特定版本']
+            },
+            {
+                id: 'taurine',
+                name: 'Taurine',
+                icon: 'fas fa-bull',
+                description: 'iOS 14.0-14.3越獄工具，使用libhooker注入框架',
+                platform: 'ios',
+                difficulty: '中等',
+                successRate: '88%',
+                risks: ['版本限制嚴格']
+            },
+            {
+                id: 'magisk',
+                name: 'Magisk',
+                icon: 'fab fa-android',
+                description: 'Android系統無痕Root解決方案，通過系統分區修改獲取權限',
+                platform: 'android',
+                difficulty: '中等',
+                successRate: '92%',
+                risks: ['解鎖Bootloader', '失去保修']
+            },
+            {
+                id: 'twrp',
+                name: 'TWRP Recovery',
+                icon: 'fas fa-sync-alt',
+                description: '第三方Recovery環境，支援刷機、備份、檔案管理',
+                platform: 'android',
+                difficulty: '中等',
+                successRate: '95%',
+                risks: ['刷入失敗可能變磚']
+            },
+            {
+                id: 'odin',
+                name: 'Odin',
+                icon: 'fas fa-hammer',
+                description: '三星設備專用刷機工具，支援官方固件刷入',
+                platform: 'android',
+                difficulty: '簡單',
+                successRate: '98%',
+                risks: ['錯誤刷入可能變磚']
+            },
+            {
+                id: 'miunlock',
+                name: 'Mi Unlock',
+                icon: 'fas fa-unlock-alt',
+                description: '小米官方Bootloader解鎖工具，需要申請等待期',
+                platform: 'android',
+                difficulty: '簡單',
+                successRate: '99%',
+                risks: ['清除數據', '等待7天']
+            },
+            {
+                id: 'filza',
+                name: 'Filza File Manager',
+                icon: 'fas fa-folder-open',
+                description: 'iOS越獄後檔案管理器，可修改系統檔案',
+                platform: 'ios',
+                difficulty: '簡單',
+                successRate: '100%',
+                risks: ['誤刪系統檔案']
+            },
+            {
+                id: 'cydia',
+                name: 'Cydia',
+                icon: 'fas fa-shopping-bag',
+                description: 'iOS越獄後軟件包管理器，可安裝插件、主題、工具',
+                platform: 'ios',
+                difficulty: '簡單',
+                successRate: '100%',
+                risks: ['插件衝突']
+            },
+            {
+                id: 'sileo',
+                name: 'Sileo',
+                icon: 'fas fa-box-open',
+                description: '現代化越獄軟件包管理器，替代Cydia',
+                platform: 'ios',
+                difficulty: '簡單',
+                successRate: '100%',
+                risks: ['插件兼容性']
+            },
+            {
+                id: 'zebra',
+                name: 'Zebra',
+                icon: 'fas fa-horse-head',
+                description: '輕量級越獄軟件包管理器，快速穩定',
+                platform: 'ios',
+                difficulty: '簡單',
+                successRate: '100%',
+                risks: ['源較少']
+            },
+            {
+                id: 'itunes',
+                name: 'iTunes',
+                icon: 'fas fa-music',
+                description: '蘋果官方管理工具，用於備份、恢復、更新iOS設備',
+                platform: 'ios',
+                difficulty: '簡單',
+                successRate: '99%',
+                risks: ['可能更新到不可越獄版本']
+            },
+            {
+                id: '3utools',
+                name: '3uTools',
+                icon: 'fas fa-tools',
+                description: '第三方iOS設備管理工具，功能強大',
+                platform: 'ios',
+                difficulty: '簡單',
+                successRate: '95%',
+                risks: ['非官方工具']
+            },
+            {
+                id: 'ireb',
+                name: 'iReb',
+                icon: 'fas fa-redo',
+                description: 'iOS設備退出恢復模式工具',
+                platform: 'ios',
+                difficulty: '簡單',
+                successRate: '90%',
+                risks: ['可能無效']
+            },
+            {
+                id: 'sn0wbreeze',
+                name: 'sn0wbreeze',
+                icon: 'fas fa-snowflake',
+                description: '舊版iOS自定義固件製作工具',
+                platform: 'ios',
+                difficulty: '困難',
+                successRate: '80%',
+                risks: ['僅支援舊設備']
+            },
+            {
+                id: 'redsn0w',
+                name: 'redsn0w',
+                icon: 'fas fa-fire',
+                description: 'iOS 3-6時代越獄工具',
+                platform: 'ios',
+                difficulty: '中等',
+                successRate: '85%',
+                risks: ['僅支援舊系統']
+            },
+            {
+                id: 'absinthe',
+                name: 'Absinthe',
+                icon: 'fas fa-wine-bottle',
+                description: 'iOS 5-6一鍵越獄工具',
+                platform: 'ios',
+                difficulty: '簡單',
+                successRate: '95%',
+                risks: ['僅支援舊系統']
+            },
+            {
+                id: 'evasi0n',
+                name: 'evasi0n',
+                icon: 'fas fa-user-secret',
+                description: 'iOS 6-7越獄工具',
+                platform: 'ios',
+                difficulty: '簡單',
+                successRate: '90%',
+                risks: ['僅支援舊系統']
+            },
+            {
+                id: 'pangu',
+                name: 'Pangu',
+                icon: 'fas fa-globe-asia',
+                description: 'iOS 7-9越獄工具',
+                platform: 'ios',
+                difficulty: '中等',
+                successRate: '88%',
+                risks: ['中文界面', '僅支援舊系統']
+            }
+        ];
+
+        // 故障數據庫
+        const IssuesDatabase = [
+            {
+                id: 'bootloop',
+                name: '無限重啟 (Bootloop)',
+                icon: 'fas fa-redo',
+                description: '設備不斷重啟，無法進入系統',
+                platform: 'both',
+                causes: ['插件衝突', '系統檔案損壞', '錯誤的系統修改'],
+                solutions: ['進入恢復模式', '使用iTunes恢復', '刪除問題插件']
+            },
+            {
+                id: 'whiteapple',
+                name: '白蘋果 (White Apple)',
+                icon: 'fas fa-apple-alt',
+                description: '卡在蘋果logo畫面，無法開機',
+                platform: 'ios',
+                causes: ['越獄失敗', '系統檔案損壞', '錯誤的tweaks'],
+                solutions: ['強制重啟', '進入DFU模式恢復', '使用iTunes更新']
+            },
+            {
+                id: 'rootlost',
+                name: 'Root權限丟失',
+                icon: 'fas fa-user-lock',
+                description: 'Root權限失效，需要重新獲取',
+                platform: 'android',
+                causes: ['系統更新', 'Magisk模組衝突', '錯誤卸載'],
+                solutions: ['重新刷入Magisk', '檢查模組衝突', '更新Magisk版本']
+            },
+            {
+                id: 'bricked',
+                name: '設備變磚',
+                icon: 'fas fa-mobile-alt',
+                description: '設備完全無法開機，無任何反應',
+                platform: 'both',
+                causes: ['錯誤的刷機包', '硬體損壞', '電源管理問題'],
+                solutions: ['進入Download模式', '使用官方工具恢復', '送修']
+            },
+            {
+                id: 'cydiacrash',
+                name: 'Cydia閃退',
+                icon: 'fas fa-shopping-bag',
+                description: 'Cydia打開立即閃退',
+                platform: 'ios',
+                causes: ['檔案權限錯誤', 'Cydia損壞', '系統衝突'],
+                solutions: ['運行uicache', '重新安裝Cydia', '使用Filza修復']
+            },
+            {
+                id: 'noservice',
+                name: '無服務/信號',
+                icon: 'fas fa-signal',
+                description: '設備無法接收行動網絡信號',
+                platform: 'both',
+                causes: ['基帶損壞', 'IMEI丟失', '系統檔案錯誤'],
+                solutions: ['恢復基帶', '修復IMEI', '刷入官方固件']
+            },
+            {
+                id: 'battery',
+                name: '電池耗電異常',
+                icon: 'fas fa-battery-quarter',
+                description: '電池快速耗電，待機時間大幅縮短',
+                platform: 'both',
+                causes: ['後台程序異常', '插件衝突', '電池老化'],
+                solutions: ['檢查後台程序', '卸載問題插件', '更換電池']
+            },
+            {
+                id: 'touchid',
+                name: 'Touch ID/Face ID失效',
+                icon: 'fas fa-fingerprint',
+                description: '生物識別功能無法使用',
+                platform: 'ios',
+                causes: ['越獄導致失效', '硬件損壞', '系統錯誤'],
+                solutions: ['重新越獄', '系統恢復', '硬件維修']
+            }
+        ];
+
+        // 插件數據庫
+        const PluginsDatabase = [
+            { id: 'zeppelin', name: 'Zeppelin', desc: '自定義運營商圖標', version: '2.1.0-12', repo: 'BigBoss' },
+            { id: 'winterboard', name: 'WinterBoard', desc: '系統主題更換工具', version: '0.9.3919', repo: 'ModMyi' },
+            { id: 'activator', name: 'Activator', desc: '手勢與按鍵自定義', version: '1.9.13', repo: 'Ryan Petrich' },
+            { id: 'sbsettings', name: 'SBSettings', desc: '快速設置切換面板', version: '6.0.5-1', repo: 'BigBoss' },
+            { id: 'ifile', name: 'iFile', desc: '檔案管理器', version: '2.2.0-1', repo: 'BigBoss' },
+            { id: 'bars', name: 'Bars', desc: '精確信號強度顯示', version: '0.7.0', repo: 'ModMyi' },
+            { id: 'f.lux', name: 'f.lux', desc: '屏幕色溫調節', version: '0.9986', repo: 'Cydia/Telesphoreo' },
+            { id: 'lockinfo', name: 'LockInfo', desc: '鎖屏信息增強', version: '7.0.3.12', repo: 'ModMyi' },
+            { id: 'intelliscreenx', name: 'IntelliScreenX', desc: '通知中心增強', version: '7.00.05', repo: 'ModMyi' },
+            { id: 'auxo', name: 'Auxo', desc: '多任務增強', version: '1.6.3-1', repo: 'A3Tweaks' }
+        ];
+
+        // 初始化系統
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeSystem();
+            
+            // 模擬系統加載
+            setTimeout(() => {
+                document.getElementById('loader').style.display = 'none';
+                showNotification('系統加載完成！歡迎使用手機越獄模擬訓練系統。', 'success');
+            }, 1500);
+        });
+
+        // 系統初始化函數
+        function initializeSystem() {
+            // 綁定導航按鈕事件
+            document.getElementById('homeBtn').addEventListener('click', () => navigateToPage('page1'));
+            document.getElementById('backBtn').addEventListener('click', navigateBack);
+            document.getElementById('guideBtn').addEventListener('click', () => navigateToPage('pageGuide'));
+            
+            // 設備選擇按鈕
+            document.getElementById('iosBtn').addEventListener('click', () => {
+                SystemState.selectedPlatform = 'ios';
+                showNotification('已選擇iOS平台', 'success');
+            });
+            
+            document.getElementById('androidBtn').addEventListener('click', () => {
+                SystemState.selectedPlatform = 'android';
+                showNotification('已選擇Android平台', 'success');
+            });
+            
+            document.getElementById('enterSelectionBtn').addEventListener('click', () => {
+                if (!SystemState.selectedPlatform) {
+                    showNotification('請先選擇設備平台！', 'warning');
+                    return;
+                }
+                navigateToPage('page2');
+                initializeDeviceSelection();
+            });
+            
+            // 模式卡片點擊事件
+            document.querySelectorAll('.mode-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    const mode = this.getAttribute('data-mode');
+                    selectMode(mode);
+                });
+            });
+            
+            // iOS越獄按鈕事件
+            document.getElementById('startJailbreakBtn')?.addEventListener('click', startJailbreak);
+            document.querySelectorAll('#pageIOSJailbreak .action-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const action = this.getAttribute('data-action');
+                    handleJailbreakAction(action);
+                });
+            });
+            
+            // Android Root按鈕事件
+            document.getElementById('startRootBtn')?.addEventListener('click', startRoot);
+            document.querySelectorAll('#pageAndroidRoot .action-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const action = this.getAttribute('data-action');
+                    handleRootAction(action);
+                });
+            });
+            
+            // 綁定所有按鈕的點擊動畫
+            document.querySelectorAll('button').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    this.classList.add('shake');
+                    setTimeout(() => this.classList.remove('shake'), 300);
+                });
+            });
+        }
+
+        // 頁面導航系統
+        function navigateToPage(pageId) {
+            // 隱藏所有頁面
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+
+            // 顯示目標頁面
+            const targetPage = document.getElementById(pageId);
+            if (targetPage) {
+                targetPage.classList.add('active');
+                
+                // 更新當前頁面和歷史記錄
+                if (SystemState.currentPage !== pageId) {
+                    SystemState.pageHistory.push(pageId);
+                    SystemState.currentPage = pageId;
+                }
+
+                // 頁面特定初始化
+                if (pageId === 'page2') {
+                    initializeDeviceSelection();
+                } else if (pageId === 'page3') {
+                    // 模式選擇頁面
+                } else if (pageId === 'pageTools') {
+                    initializeToolsLibrary();
+                } else if (pageId === 'pageTroubleshoot') {
+                    initializeTroubleshoot();
+                }
+
+                // 滾動到頂部
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+
+                showNotification(`已切換到${getPageTitle(pageId)}頁面`);
+            }
+        }
+
+        function navigateBack() {
+            if (SystemState.pageHistory.length > 1) {
+                SystemState.pageHistory.pop(); // 移除當前頁面
+                const prevPage = SystemState.pageHistory.pop(); // 取得上一頁
+                navigateToPage(prevPage);
+            }
+        }
+
+        function getPageTitle(pageId) {
+            const titles = {
+                'page1': '首頁',
+                'pageGuide': '操作指南',
+                'page2': '設備選擇',
+                'page3': '功能模式',
+                'pageIOSJailbreak': 'iOS越獄',
+                'pageAndroidRoot': 'Android Root',
+                'pageTools': '工具庫',
+                'pageTroubleshoot': '故障排查'
+            };
+            return titles[pageId] || '未知頁面';
+        }
+
+        // 通知系統
+        function showNotification(message, type = 'info') {
+            // 創建通知元素
+            const notification = document.createElement('div');
+            notification.className = 'hint-box';
+            notification.style.position = 'fixed';
+            notification.style.top = '80px';
+            notification.style.right = '20px';
+            notification.style.zIndex = '9998';
+            notification.style.maxWidth = '350px';
+            notification.style.animation = 'fadeIn 0.3s ease';
+            
+            if (type === 'success') {
+                notification.classList.add('success');
+                notification.innerHTML = `<p><i class="fas fa-check-circle"></i> ${message}</p>`;
+            } else if (type === 'warning') {
+                notification.classList.add('warning');
+                notification.innerHTML = `<p><i class="fas fa-exclamation-triangle"></i> ${message}</p>`;
+            } else if (type === 'danger') {
+                notification.classList.add('danger');
+                notification.innerHTML = `<p><i class="fas fa-times-circle"></i> ${message}</p>`;
+            } else {
+                notification.innerHTML = `<p><i class="fas fa-info-circle"></i> ${message}</p>`;
+            }
+            
+            document.body.appendChild(notification);
+            
+            // 自動移除通知
+            setTimeout(() => {
+                notification.style.animation = 'fadeOut 0.3s ease';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        // 初始化設備選擇
+        function initializeDeviceSelection() {
+            const iosModelsContainer = document.getElementById('iosModels');
+            const androidModelsContainer = document.getElementById('androidModels');
+            
+            if (!iosModelsContainer || !androidModelsContainer) return;
+            
+            // 清空現有內容
+            iosModelsContainer.innerHTML = '';
+            androidModelsContainer.innerHTML = '';
+            
+            // 添加iOS設備
+            DeviceDatabase.ios.forEach(device => {
+                const modelBtn = document.createElement('button');
+                modelBtn.className = 'model-btn';
+                modelBtn.innerHTML = `
+                    <div class="model-name">${device.name}</div>
+                    <div class="model-versions">${device.versions.join(', ')}</div>
+                    <div style="font-size: 0.8rem; color: var(--ios-blue); margin-top: 5px;">${device.tools.join(', ')}</div>
+                `;
+                modelBtn.addEventListener('click', () => selectDevice('ios', device));
+                iosModelsContainer.appendChild(modelBtn);
+            });
+            
+            // 添加Android設備
+            DeviceDatabase.android.forEach(device => {
+                const modelBtn = document.createElement('button');
+                modelBtn.className = 'model-btn';
+                modelBtn.innerHTML = `
+                    <div class="model-name">${device.name}</div>
+                    <div class="model-versions">${device.brand} • ${device.ui}</div>
+                    <div style="font-size: 0.8rem; color: var(--android-green); margin-top: 5px;">${device.tools.join(', ')}</div>
+                `;
+                modelBtn.addEventListener('click', () => selectDevice('android', device));
+                androidModelsContainer.appendChild(modelBtn);
+            });
+        }
+
+        // 選擇設備
+        function selectDevice(platform, device) {
+            SystemState.selectedDevice = device;
+            SystemState.selectedPlatform = platform;
+            
+            showNotification(`已選擇：${device.name}`, 'success');
+            
+            // 延遲導航到模式選擇頁面
+            setTimeout(() => {
+                navigateToPage('page3');
+            }, 500);
+        }
+
+        // 選擇模式
+        function selectMode(mode) {
+            SystemState.selectedMode = mode;
+            
+            switch(mode) {
+                case 'jailbreak':
+                    if (SystemState.selectedPlatform === 'ios') {
+                        navigateToPage('pageIOSJailbreak');
+                        initializeJailbreakPage();
+                    } else {
+                        navigateToPage('pageAndroidRoot');
+                        initializeRootPage();
+                    }
+                    break;
+                case 'tools':
+                    navigateToPage('pageTools');
+                    break;
+                case 'troubleshoot':
+                    navigateToPage('pageTroubleshoot');
+                    break;
+                case 'upgrade':
+                    showNotification('升降級模式開發中...', 'info');
+                    break;
+            }
+        }
+
+        // 初始化iOS越獄頁面
+        function initializeJailbreakPage() {
+            if (!SystemState.selectedDevice) return;
+            
+            const device = SystemState.selectedDevice;
+            document.getElementById('currentDevice').textContent = device.name;
+            document.getElementById('deviceDetails').textContent = 
+                `${device.versions[0]} • ${device.chip} • 示範設備`;
+            
+            // 重置進度
+            SystemState.jailbreakProgress = 0;
+            SystemState.currentStep = 1;
+            updateProgress();
+            updateSteps();
+        }
+
+        // 初始化Android Root頁面
+        function initializeRootPage() {
+            if (!SystemState.selectedDevice) return;
+            
+            const device = SystemState.selectedDevice;
+            document.getElementById('androidDevice').textContent = device.name;
+            document.getElementById('androidDetails').textContent = 
+                `${device.ui} • 示範設備 • ${device.brand}`;
+            
+            // 重置進度
+            SystemState.rootProgress = 0;
+            SystemState.currentStep = 1;
+            updateAndroidProgress();
+            updateAndroidSteps();
+        }
+
+        // 開始iOS越獄
+        function startJailbreak() {
+            if (SystemState.isJailbreaking) return;
+            
+            SystemState.isJailbreaking = true;
+            document.getElementById('startJailbreakBtn').disabled = true;
+            document.getElementById('startJailbreakBtn').innerHTML = '<i class="fas fa-spinner fa-spin"></i> 越獄進行中';
+            
+            showNotification('開始iOS越獄流程...', 'info');
+            
+            // 模擬越獄過程
+            simulateJailbreakProcess();
+        }
+
+        // 處理iOS越獄步驟
+        function handleJailbreakAction(action) {
+            const terminal = document.getElementById('terminalOutput');
+            
+            switch(action) {
+                case 'backup':
+                    addTerminalLine(terminal, '正在備份數據到iCloud...', 'output');
+                    setTimeout(() => {
+                        addTerminalLine(terminal, '備份完成！', 'success');
+                        completeStep(1);
+                    }, 1000);
+                    break;
+                    
+                case 'findmy':
+                    addTerminalLine(terminal, '關閉查找我的iPhone...', 'output');
+                    setTimeout(() => {
+                        addTerminalLine(terminal, '已成功關閉！', 'success');
+                        completeStep(2);
+                    }, 800);
+                    break;
+                    
+                case 'dfu':
+                    addTerminalLine(terminal, '嘗試進入DFU模式...', 'output');
+                    addTerminalLine(terminal, '請按照指示操作：', 'output');
+                    addTerminalLine(terminal, '1. 快速按下音量+，然後音量-', 'output');
+                    addTerminalLine(terminal, '2. 長按電源鍵直到屏幕變黑', 'output');
+                    
+                    // 顯示重啟畫面
+                    showRebootScreen();
+                    
+                    setTimeout(() => {
+                        hideRebootScreen();
+                        addTerminalLine(terminal, '成功進入DFU模式！', 'success');
+                        completeStep(3);
+                    }, 2000);
+                    break;
+                    
+                case 'run':
+                    const tool = document.getElementById('jailbreakTool').value;
+                    addTerminalLine(terminal, `啟動越獄工具：${getToolName(tool)}...`, 'output');
+                    addTerminalLine(terminal, '正在檢測設備...', 'output');
+                    addTerminalLine(terminal, '設備型號：' + SystemState.selectedDevice.name, 'output');
+                    addTerminalLine(terminal, '系統版本：' + SystemState.selectedDevice.versions[0], 'output');
+                    
+                    setTimeout(() => {
+                        addTerminalLine(terminal, '開始漏洞利用...', 'output');
+                        setTimeout(() => {
+                            addTerminalLine(terminal, '漏洞利用成功！', 'success');
+                            addTerminalLine(terminal, '安裝越獄環境...', 'output');
+                            completeStep(4);
+                        }, 1500);
+                    }, 1000);
+                    break;
+            }
+        }
+
+        // 模擬越獄過程
+        function simulateJailbreakProcess() {
+            const terminal = document.getElementById('terminalOutput');
+            let progress = 0;
+            
+            // 清空終端
+            terminal.innerHTML = '<div class="terminal-line"><span class="terminal-prompt">$ </span><span class="terminal-command">開始越獄流程...</span></div>';
+            
+            const process = setInterval(() => {
+                progress += 5;
+                SystemState.jailbreakProgress = progress;
+                updateProgress();
+                
+                if (progress % 20 === 0) {
+                    const messages = [
+                        '正在檢測設備兼容性...',
+                        '下載越獄組件...',
+                        '準備漏洞利用...',
+                        '執行checkm8漏洞利用...',
+                        '安裝Cydia substrate...',
+                        '配置越獄環境...',
+                        '驗證安裝完整性...',
+                        '準備重啟設備...'
+                    ];
+                    
+                    const message = messages[Math.floor(progress / 20) - 1];
+                    if (message) {
+                        addTerminalLine(terminal, message, 'output');
+                        
+                        if (message.includes('準備重啟設備')) {
+                            setTimeout(() => {
+                                showRebootScreen();
+                            }, 500);
+                        }
+                    }
+                }
+                
+                if (progress >= 100) {
+                    clearInterval(process);
+                    completeJailbreak();
+                }
+            }, 300);
+        }
+
+        // 完成越獄
+        function completeJailbreak() {
+            const terminal = document.getElementById('terminalOutput');
+            
+            setTimeout(() => {
+                hideRebootScreen();
+                
+                addTerminalLine(terminal, '越獄成功完成！', 'success');
+                addTerminalLine(terminal, '正在啟動Cydia...', 'output');
+                
+                // 顯示Cydia界面
+                setTimeout(() => {
+                    showCydiaInterface();
+                }, 1000);
+                
+                // 更新狀態
+                document.getElementById('jailbreakStatus').textContent = '越獄成功';
+                document.getElementById('jailbreakStatus').style.background = 'rgba(52, 199, 89, 0.2)';
+                document.getElementById('jailbreakStatus').style.color = 'var(--success-green)';
+                document.getElementById('jailbreakStatus').style.borderColor = 'var(--success-green)';
+                
+                showNotification('iOS越獄成功完成！', 'success');
+                
+                // 啟用開始按鈕
+                setTimeout(() => {
+                    document.getElementById('startJailbreakBtn').disabled = false;
+                    document.getElementById('startJailbreakBtn').innerHTML = '<i class="fas fa-redo"></i> 重新開始';
+                    SystemState.isJailbreaking = false;
+                }, 2000);
+                
+                // 完成所有步驟
+                for (let i = 1; i <= 6; i++) {
+                    completeStep(i);
+                }
+            }, 2000);
+        }
+
+        // 開始Android Root
+        function startRoot() {
+            if (SystemState.isRooting) return;
+            
+            SystemState.isRooting = true;
+            document.getElementById('startRootBtn').disabled = true;
+            document.getElementById('startRootBtn').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Root進行中';
+            
+            showNotification('開始Android Root流程...', 'info');
+            
+            // 模擬Root過程
+            simulateRootProcess();
+        }
+
+        // 處理Android Root步驟
+        function handleRootAction(action) {
+            const terminal = document.getElementById('androidTerminalOutput');
+            
+            switch(action) {
+                case 'apply':
+                    addTerminalLine(terminal, '申請Bootloader解鎖權限...', 'output');
+                    setTimeout(() => {
+                        addTerminalLine(terminal, '已提交申請，需等待7天審核期', 'warning');
+                        completeAndroidStep(1);
+                    }, 1000);
+                    break;
+                    
+                case 'fastboot':
+                    addTerminalLine(terminal, '嘗試進入Fastboot模式...', 'output');
+                    addTerminalLine(terminal, '請同時按住音量- + 電源鍵...', 'output');
+                    
+                    showRebootScreen();
+                    
+                    setTimeout(() => {
+                        hideRebootScreen();
+                        addTerminalLine(terminal, '成功進入Fastboot模式！', 'success');
+                        completeAndroidStep(2);
+                    }, 1500);
+                    break;
+                    
+                case 'unlock':
+                    addTerminalLine(terminal, '執行解鎖命令...', 'output');
+                    addTerminalLine(terminal, '$ fastboot oem unlock', 'command');
+                    setTimeout(() => {
+                        addTerminalLine(terminal, '警告：解鎖將清除所有數據！', 'warning');
+                        setTimeout(() => {
+                            addTerminalLine(terminal, '正在解鎖Bootloader...', 'output');
+                            addTerminalLine(terminal, '解鎖成功！設備將重啟...', 'success');
+                            completeAndroidStep(3);
+                        }, 1000);
+                    }, 800);
+                    break;
+                    
+                case 'recovery':
+                    addTerminalLine(terminal, '刷入TWRP Recovery...', 'output');
+                    addTerminalLine(terminal, '$ fastboot flash recovery twrp.img', 'command');
+                    setTimeout(() => {
+                        addTerminalLine(terminal, '刷入成功！', 'success');
+                        completeAndroidStep(4);
+                    }, 1200);
+                    break;
+                    
+                case 'magisk':
+                    addTerminalLine(terminal, '安裝Magisk獲取Root權限...', 'output');
+                    addTerminalLine(terminal, '在TWRP中刷入Magisk ZIP...', 'output');
+                    setTimeout(() => {
+                        addTerminalLine(terminal, 'Magisk安裝完成！', 'success');
+                        completeAndroidStep(5);
+                    }, 1500);
+                    break;
+                    
+                case 'rom':
+                    addTerminalLine(terminal, '刷入第三方ROM...', 'output');
+                    addTerminalLine(terminal, '選擇ROM：LineageOS 20', 'output');
+                    setTimeout(() => {
+                        addTerminalLine(terminal, '刷機完成！享受純淨Android體驗', 'success');
+                        completeAndroidStep(6);
+                    }, 2000);
+                    break;
+            }
+        }
+
+        // 模擬Root過程
+        function simulateRootProcess() {
+            const terminal = document.getElementById('androidTerminalOutput');
+            let progress = 0;
+            
+            // 清空終端
+            terminal.innerHTML = '<div class="terminal-line"><span class="terminal-prompt">fastboot> </span><span class="terminal-command">開始Root流程...</span></div>';
+            
+            const process = setInterval(() => {
+                progress += 5;
+                SystemState.rootProgress = progress;
+                updateAndroidProgress();
+                
+                if (progress % 20 === 0) {
+                    const messages = [
+                        '檢測設備連接...',
+                        '檢查Bootloader狀態...',
+                        '下載必要文件...',
+                        '準備解鎖環境...',
+                        '刷入Recovery...',
+                        '安裝Root權限...',
+                        '配置系統環境...',
+                        '完成Root設置...'
+                    ];
+                    
+                    const message = messages[Math.floor(progress / 20) - 1];
+                    if (message) {
+                        addTerminalLine(terminal, message, 'output');
+                    }
+                }
+                
+                if (progress >= 100) {
+                    clearInterval(process);
+                    completeRoot();
+                }
+            }, 300);
+        }
+
+        // 完成Root
+        function completeRoot() {
+            const terminal = document.getElementById('androidTerminalOutput');
+            
+            addTerminalLine(terminal, 'Root流程完成！', 'success');
+            addTerminalLine(terminal, '設備已成功獲取Root權限', 'output');
+            
+            // 更新狀態
+            const statusBadge = document.querySelector('#pageAndroidRoot .status-badge');
+            statusBadge.textContent = 'Root成功';
+            statusBadge.style.background = 'rgba(52, 199, 89, 0.2)';
+            statusBadge.style.color = 'var(--success-green)';
+            statusBadge.style.borderColor = 'var(--success-green)';
+            
+            showNotification('Android Root成功完成！', 'success');
+            
+            // 啟用開始按鈕
+            setTimeout(() => {
+                document.getElementById('startRootBtn').disabled = false;
+                document.getElementById('startRootBtn').innerHTML = '<i class="fas fa-redo"></i> 重新開始';
+                SystemState.isRooting = false;
+            }, 2000);
+            
+            // 完成所有步驟
+            for (let i = 1; i <= 6; i++) {
+                completeAndroidStep(i);
+            }
+        }
+
+        // 工具函數
+        function updateProgress() {
+            document.getElementById('progressFill').style.width = `${SystemState.jailbreakProgress}%`;
+            document.getElementById('progressPercent').textContent = `${SystemState.jailbreakProgress}%`;
+        }
+
+        function updateAndroidProgress() {
+            document.getElementById('androidProgressFill').style.width = `${SystemState.rootProgress}%`;
+            document.getElementById('androidProgressPercent').textContent = `${SystemState.rootProgress}%`;
+        }
+
+        function updateSteps() {
+            document.querySelectorAll('#pageIOSJailbreak .step-item').forEach(item => {
+                const step = parseInt(item.getAttribute('data-step'));
+                const stepNumber = item.querySelector('.step-number');
+                
+                if (step <= SystemState.currentStep) {
+                    item.classList.add('active');
+                    stepNumber.style.background = 'var(--ios-blue)';
+                    stepNumber.style.borderColor = 'var(--ios-blue)';
+                } else {
+                    item.classList.remove('active');
+                    stepNumber.style.background = '';
+                    stepNumber.style.borderColor = '';
+                }
+            });
+        }
+
+        function updateAndroidSteps() {
+            document.querySelectorAll('#pageAndroidRoot .step-item').forEach(item => {
+                const step = parseInt(item.getAttribute('data-step'));
+                const stepNumber = item.querySelector('.step-number');
+                
+                if (step <= SystemState.currentStep) {
+                    item.classList.add('active');
+                    stepNumber.style.background = 'var(--android-green)';
+                    stepNumber.style.borderColor = 'var(--android-green)';
+                } else {
+                    item.classList.remove('active');
+                    stepNumber.style.background = '';
+                    stepNumber.style.borderColor = '';
+                }
+            });
+        }
+
+        function completeStep(stepNum) {
+            if (stepNum > SystemState.currentStep) {
+                SystemState.currentStep = stepNum;
+                updateSteps();
+            }
+        }
+
+        function completeAndroidStep(stepNum) {
+            if (stepNum > SystemState.currentStep) {
+                SystemState.currentStep = stepNum;
+                updateAndroidSteps();
+            }
+        }
+
+        function addTerminalLine(terminal, text, type = 'output') {
+            const line = document.createElement('div');
+            line.className = 'terminal-line';
+            
+            if (type === 'command') {
+                line.innerHTML = `<span class="terminal-prompt">$ </span><span class="terminal-command">${text}</span>`;
+            } else if (type === 'success') {
+                line.innerHTML = `<span class="terminal-output">${text}</span>`;
+                line.querySelector('.terminal-output').className = 'terminal-success';
+            } else if (type === 'error') {
+                line.innerHTML = `<span class="terminal-output">${text}</span>`;
+                line.querySelector('.terminal-output').className = 'terminal-error';
+            } else {
+                line.innerHTML = `<span class="terminal-output">${text}</span>`;
+            }
+            
+            terminal.appendChild(line);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        function showRebootScreen() {
+            const rebootScreen = document.getElementById('rebootScreen');
+            rebootScreen.classList.add('active');
+        }
+
+        function hideRebootScreen() {
+            const rebootScreen = document.getElementById('rebootScreen');
+            rebootScreen.classList.remove('active');
+        }
+
+        function getToolName(toolId) {
+            const tools = {
+                'checkra1n': 'Checkra1n',
+                'unc0ver': 'Unc0ver',
+                'odyssey': 'Odyssey',
+                'taurine': 'Taurine'
+            };
+            return tools[toolId] || toolId;
+        }
+
+        // 初始化工具庫
+        function initializeToolsLibrary() {
+            const toolsGrid = document.getElementById('toolsGrid');
+            if (!toolsGrid) return;
+            
+            toolsGrid.innerHTML = '';
+            
+            // 根據平台過濾工具
+            let filteredTools = ToolsDatabase;
+            if (SystemState.selectedPlatform === 'ios') {
+                filteredTools = ToolsDatabase.filter(tool => tool.platform === 'ios');
+            } else if (SystemState.selectedPlatform === 'android') {
+                filteredTools = ToolsDatabase.filter(tool => tool.platform === 'android');
+            }
+            
+            // 添加工具卡片
+            filteredTools.forEach(tool => {
+                const toolCard = document.createElement('div');
+                toolCard.className = 'tool-card';
+                toolCard.innerHTML = `
+                    <div class="tool-header">
+                        <div class="tool-icon">
+                            <i class="${tool.icon}"></i>
+                        </div>
+                        <h3 class="tool-name">${tool.name}</h3>
+                    </div>
+                    <div class="tool-body">
+                        <p class="tool-desc">${tool.description}</p>
+                        <div class="tool-info">
+                            <span>平台：${tool.platform === 'ios' ? 'iOS' : 'Android'}</span>
+                            <span>難度：${tool.difficulty}</span>
+                            <span>成功率：${tool.successRate}</span>
+                        </div>
+                        <div class="tool-actions">
+                            <button class="action-btn" onclick="showToolDetail('${tool.id}')">
+                                <i class="fas fa-info-circle"></i> 詳細信息
+                            </button>
+                            <button class="action-btn" onclick="simulateTool('${tool.id}')">
+                                <i class="fas fa-play"></i> 模擬使用
+                            </button>
+                        </div>
+                    </div>
+                `;
+                toolsGrid.appendChild(toolCard);
+            });
+        }
+
+        // 初始化故障排查
+        function initializeTroubleshoot() {
+            const issueGrid = document.getElementById('issueGrid');
+            if (!issueGrid) return;
+            
+            issueGrid.innerHTML = '';
+            
+            // 根據平台過濾故障
+            let filteredIssues = IssuesDatabase;
+            if (SystemState.selectedPlatform === 'ios') {
+                filteredIssues = IssuesDatabase.filter(issue => issue.platform === 'ios' || issue.platform === 'both');
+            } else if (SystemState.selectedPlatform === 'android') {
+                filteredIssues = IssuesDatabase.filter(issue => issue.platform === 'android' || issue.platform === 'both');
+            }
+            
+            // 添加故障卡片
+            filteredIssues.forEach(issue => {
+                const issueCard = document.createElement('div');
+                issueCard.className = 'issue-card';
+                issueCard.innerHTML = `
+                    <div class="issue-header">
+                        <div class="issue-icon">
+                            <i class="${issue.icon}"></i>
+                        </div>
+                        <h3 class="issue-title">${issue.name}</h3>
+                    </div>
+                    <p class="issue-desc">${issue.description}</p>
+                    <div class="hint-box warning" style="margin: 15px 0;">
+                        <p><strong>可能原因：</strong> ${issue.causes.join('、')}</p>
+                    </div>
+                    <div class="hint-box" style="margin: 15px 0;">
+                        <p><strong>解決方案：</strong> ${issue.solutions.join(' → ')}</p>
+                    </div>
+                    <button class="action-btn" onclick="simulateIssue('${issue.id}')" style="width: 100%; margin-top: 10px;">
+                        <i class="fas fa-play-circle"></i> 模擬此故障
+                    </button>
+                `;
+                issueGrid.appendChild(issueCard);
+            });
+        }
+
+        // 顯示工具詳情
+        window.showToolDetail = function(toolId) {
+            const tool = ToolsDatabase.find(t => t.id === toolId);
+            if (!tool) return;
+            
+            alert(`${tool.name} 詳細信息\n\n描述：${tool.description}\n平台：${tool.platform}\n難度：${tool.difficulty}\n成功率：${tool.successRate}\n風險：${tool.risks.join('、')}\n\n使用教學：\n1. 下載對應版本工具\n2. 確保設備電量充足\n3. 按照引導步驟操作\n4. 等待過程完成\n5. 驗證越獄/Root狀態`);
+        };
+
+        // 模擬工具使用
+        window.simulateTool = function(toolId) {
+            const tool = ToolsDatabase.find(t => t.id === toolId);
+            if (!tool) return;
+            
+            showNotification(`開始模擬 ${tool.name} 使用...`, 'info');
+            
+            setTimeout(() => {
+                const messages = [
+                    `啟動 ${tool.name}...`,
+                    '檢測設備連接...',
+                    '檢查系統版本...',
+                    '準備必要文件...',
+                    '執行核心操作...',
+                    '等待設備響應...',
+                    '操作完成！'
+                ];
+                
+                let current = 0;
+                const interval = setInterval(() => {
+                    if (current < messages.length) {
+                        showNotification(messages[current], 'info');
+                        current++;
+                    } else {
+                        clearInterval(interval);
+                        showNotification(`${tool.name} 模擬使用完成！`, 'success');
+                    }
+                }, 800);
+            }, 500);
+        };
+
+        // 模擬故障
+        window.simulateIssue = function(issueId) {
+            const issue = IssuesDatabase.find(i => i.id === issueId);
+            if (!issue) return;
+            
+            showNotification(`開始模擬 ${issue.name}...`, 'warning');
+            
+            // 顯示重啟畫面（如果是啟動相關故障）
+            if (issue.id === 'bootloop' || issue.id === 'whiteapple' || issue.id === 'bricked') {
+                showRebootScreen();
+                
+                setTimeout(() => {
+                    hideRebootScreen();
+                    showNotification(`${issue.name} 模擬完成！正在進入救援模式...`, 'danger');
+                    
+                    // 顯示救援選項
+                    setTimeout(() => {
+                        alert(`${issue.name} 救援方案\n\n請選擇救援方法：\n1. ${issue.solutions[0]}\n2. ${issue.solutions[1] || '無'}\n3. ${issue.solutions[2] || '無'}\n\n推薦：${issue.solutions[0]}`);
+                    }, 1000);
+                }, 2000);
+            } else {
+                // 其他故障直接顯示解決方案
+                setTimeout(() => {
+                    alert(`${issue.name} 解決方案\n\n${issue.solutions.join('\n')}`);
+                }, 1000);
+            }
+        };
+
+        // 顯示Cydia界面
+        function showCydiaInterface() {
+            const cydiaContainer = document.getElementById('cydiaContainer');
+            const pluginList = document.getElementById('pluginList');
+            
+            if (!cydiaContainer || !pluginList) return;
+            
+            // 顯示Cydia容器
+            cydiaContainer.style.display = 'block';
+            
+            // 清空並添加插件
+            pluginList.innerHTML = '';
+            
+            PluginsDatabase.forEach(plugin => {
+                const pluginItem = document.createElement('div');
+                pluginItem.className = 'plugin-item';
+                pluginItem.innerHTML = `
+                    <div style="font-weight: 600; color: #FF9500;">${plugin.name}</div>
+                    <div style="font-size: 0.9rem; color: var(--text-secondary); margin: 5px 0;">${plugin.desc}</div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem;">
+                        <span>版本: ${plugin.version}</span>
+                        <span>源: ${plugin.repo}</span>
+                    </div>
+                `;
+                pluginItem.addEventListener('click', () => {
+                    showNotification(`安裝 ${plugin.name}...`, 'info');
+                    setTimeout(() => {
+                        showNotification(`${plugin.name} 安裝成功！`, 'success');
+                    }, 1000);
+                });
+                pluginList.appendChild(pluginItem);
+            });
+            
+            // 滾動到Cydia界面
+            cydiaContainer.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // 保存系統狀態
+        function saveSystemState() {
+            try {
+                localStorage.setItem('jailbreakSimulator', JSON.stringify(SystemState));
+            } catch (e) {
+                console.error('保存失敗:', e);
+            }
+        }
+
+        // 加載系統狀態
+        function loadSystemState() {
+            try {
+                const savedState = localStorage.getItem('jailbreakSimulator');
+                if (savedState) {
+                    const parsedState = JSON.parse(savedState);
+                    Object.assign(SystemState, parsedState);
+                    showNotification('已恢復上次保存的進度', 'info');
+                }
+            } catch (e) {
+                console.error('加載失敗:', e);
+            }
+        }
+
+        // 自動保存
+        setInterval(saveSystemState, 30000); // 每30秒保存一次
+
+        // 嘗試加載保存的狀態
+        loadSystemState();
+
+        // 導出系統狀態（用於調試）
+        window.getSystemState = function() {
+            return JSON.parse(JSON.stringify(SystemState));
+        };
+
+        // 模擬SHSH2簽名驗證（iOS升降級）
+        window.simulateSHSH2 = function() {
+            showNotification('開始模擬SHSH2簽名驗證...', 'info');
+            
+            const terminal = document.getElementById('terminalOutput') || document.createElement('div');
+            
+            const messages = [
+                '檢查SHSH2 Blobs...',
+                '驗證APTicket...',
+                '檢查簽名伺服器狀態...',
+                '正在生成非ce...',
+                '提交簽名請求...',
+                '等待Apple伺服器回應...',
+                '簽名驗證通過！',
+                '可以降級到目標版本'
+            ];
+            
+            let current = 0;
+            const interval = setInterval(() => {
+                if (current < messages.length) {
+                    addTerminalLine(terminal, messages[current], current === messages.length - 1 ? 'success' : 'output');
+                    current++;
+                } else {
+                    clearInterval(interval);
+                    showNotification('SHSH2簽名驗證成功！', 'success');
+                }
+            }, 1000);
+        };
+
+        // 模擬Android刷機包選擇
+        window.simulateROMSelection = function() {
+            const roms = [
+                { name: 'LineageOS 20', android: '13', status: '穩定版' },
+                { name: 'Pixel Experience', android: '13', status: '官方版' },
+                { name: 'MIUI EU', android: '13', status: '修改版' },
+                { name: 'ArrowOS', android: '13', status: '穩定版' },
+                { name: 'crDroid', android: '13', status: '功能豐富' }
+            ];
+            
+            let romList = '可用刷機包：\n\n';
+            roms.forEach((rom, index) => {
+                romList += `${index + 1}. ${rom.name} (Android ${rom.android}) - ${rom.status}\n`;
+            });
+            
+            romList += '\n請選擇刷機包 (輸入1-5): ';
+            
+            const choice = prompt(romList);
+            if (choice && parseInt(choice) >= 1 && parseInt(choice) <= 5) {
+                const selectedRom = roms[parseInt(choice) - 1];
+                showNotification(`已選擇：${selectedRom.name}，開始刷機...`, 'info');
+                
+                // 模擬刷機過程
+                setTimeout(() => {
+                    showRebootScreen();
+                    setTimeout(() => {
+                        hideRebootScreen();
+                        showNotification(`${selectedRom.name} 刷機成功！`, 'success');
+                    }, 2000);
+                }, 1000);
+            }
+        };
+    </script>
+</body>
+</html>
